@@ -1,4 +1,14 @@
 #!/bin/env python
+# Matt Snow <mattatmattsn0wd0tcom>
+#
+# Script features:
+#     - Conect to the Rainforest Automation EMU-2 via USB.
+#     - Poll device using RAVEn XML API and normalize results.
+#     - Collect metrics relative to: 
+#          * current kW draw.
+#          * Sumation of kWh to date.
+#          * Rate price.
+#          * Tier.
 
 import serial
 import time
@@ -11,20 +21,8 @@ serial.port = serial.Serial("/dev/ttyUSB0", 115200, timeout=0.5)
 #serial.port.write("<Command><Name>initialize</Name><Refresh>N</Refresh></Command>")
 serial.port.write("<Command><Name>initialize</Name></Command>")
 
-serial.port.write("<Command><Name>get_device_info</Name></Command>")
-'''
-	'<DeviceInfo>\r\n'
-    '  <DeviceMacId>0xd8d5b900000020ba</DeviceMacId>\r\n'
-	'  <InstallCode>0x9e542351cbe4c42d</InstallCode>\r\n'
-	'  <LinkKey>0x612680b440bdd56677c2d15e76e8d480</LinkKey>\r\n'
-	'  <FWVersion>1.4.48 (6952)</FWVersion>\r\n'
-	'  <HWVersion>1.3.3</HWVersion>\r\n'
-	'  <ImageType>0x0e01</ImageType>\r\n'
-	'  <Manufacturer>Rainforest Automation, Inc.</Manufacturer>\r\n'
-	'  <ModelId>Z105-2-EMU2-LEDD</ModelId>\r\n'
-	'  <DateCode>2013110523320640</DateCode>\r\n'
-	'</DeviceInfo>\r\n'
-'''
+#serial.port.write("<Command><Name>get_device_info</Name></Command>")
+
 # Get Schedule information
 # Possible events: time, price, demand, summation, message
 getScheduleInfo = '''<Command>
@@ -34,21 +32,9 @@ getScheduleInfo = '''<Command>
 				   </Command>'''
 serial.port.write(getScheduleInfo)
 
-def cmdSerialWrite(cmd):
-	results = ['<root>']
-	cmdTemplate = '''<Command>
-	                       <Name>%s</Name>
-					 </Command>''' % (cmd)
-	serial.port.write(cmdTemplate)
-	for line in serial.port.readlines():
-		line = line.strip('\n')
-		line = line.strip('\r')
-		results.append(line)
-	results.append('</root>')
-	return results
 
 def cmdSerialWrite(cmd):
-	results = '<root>'
+	results = '<data>'
 	cmdTemplate = '''<Command>
 	                       <Name>%s</Name>
 					 </Command>''' % (cmd)
@@ -57,11 +43,27 @@ def cmdSerialWrite(cmd):
 		line = line.strip('\n')
 		line = line.strip('\r')
 		results += line
-	results += '</root>'
+	results += '</data>'
+	return results
+
+def cmdSerialWriteRefresh(cmd, refresh):
+	results = '<data>'
+	cmdTemplate = '''<Command>
+	                       <Name>%s</Name>
+	                       <Refresh>%s</Refresh>
+					 </Command>''' % (cmd, refresh)
+	serial.port.write(cmdTemplate)
+	for line in serial.port.readlines():
+		line = line.strip('\n')
+		line = line.strip('\r')
+		results += line
+	results += '</data>'
 	return results
 
 # Build big string of XML.
 data = cmdSerialWrite('get_current_price')
+
+data = cmdSerialWriteRefresh('get_current_summation_delivered', 'Y')
 
 # Create Element object, parsing XML.
 root = ET.fromstring(data)
@@ -78,11 +80,17 @@ for child in root:
 			val = item.text
 		if key == 'Demand':
 			demand = val
-		if key == 'TimeStamp':
+		elif key == 'TimeStamp':
 			now = val
 			diff = now - lastTime
 			lastTime = val
-	print '%s : %s' % (demand, diff)
+		elif key == 'DigitsRight':
+			dright = int(val, 0)
+		elif key == 'DigitsLeft':
+			dleft = int(val, 0)
+	print 'Demand: %s \nTime since last poll: %s' % (demand, diff)
+	print 'digits right of decimal: %s' % dright
+	print 'digits leftt of decimal: %s' % dleft
 
 
 
