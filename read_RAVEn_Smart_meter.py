@@ -104,11 +104,7 @@ def sendCmd(cmd):
 	       get_current_summation_delivered, get_current_period_usage, get_last_period_usage,
 	       set_fast_poll, 
 	'''
-	cmdEventTemplate = '''<Command>
-	                       <Name>%s</Name>
-	                       <MeterMacId></MeterMacId>
-	                       <Event></Event>
-					   </Command>''' % (cmd)
+	cmdTemplate = '''<Command><Name>%s</Name></Command>''' % (cmd)
 	serial.port.write(cmdTemplate)
 	for line in serial.port.readlines():
 		print line
