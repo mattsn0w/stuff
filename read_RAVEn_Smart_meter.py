@@ -69,28 +69,30 @@ data = cmdSerialWriteRefresh('get_current_summation_delivered', 'Y')
 root = ET.fromstring(data)
 
 # Enumerate Element and get the 'demand' and timestamps
-lastTime = 0
-for child in root:
-	print '> %s' % child.tag
-	for item in child:
-		key = item.tag
-		if item.text.startswith('0x'):
-			val = int(item.text, 0)
-		else:
-			val = item.text
-		if key == 'Demand':
-			demand = val
-		elif key == 'TimeStamp':
-			now = val
-			diff = now - lastTime
-			lastTime = val
-		elif key == 'DigitsRight':
-			dright = int(val, 0)
-		elif key == 'DigitsLeft':
-			dleft = int(val, 0)
-	print 'Demand: %s \nTime since last poll: %s' % (demand, diff)
-	print 'digits right of decimal: %s' % dright
-	print 'digits leftt of decimal: %s' % dleft
+def parseVals(xmldata):
+	lastTime = 0
+	for child in root:
+		print '> %s' % child.tag
+		for item in child:
+			# Assign key,val object names for saner reading.
+			key = item.tag
+			if item.text.startswith('0x'):
+				val = int(item.text, 0)
+			else:
+				val = item.text
+			if key == 'Demand':
+				demand = val
+			elif key == 'TimeStamp':
+				now = val
+				diff = now - lastTime
+				lastTime = val
+			elif key == 'DigitsRight':
+				dright = val
+			elif key == 'DigitsLeft':
+				dleft = val
+		print 'Demand: %s \nTime since last poll: %s' % (demand, diff)
+		print 'digits right of decimal: %s' % dright
+		print 'digits leftt of decimal: %s' % dleft
 
 
 
