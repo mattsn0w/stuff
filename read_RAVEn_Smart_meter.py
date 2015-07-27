@@ -96,23 +96,19 @@ def parseVals(xmldata):
 
 
 
-def cmdSerialWrite(cmd, mac):
+def sendCmd(cmd):
+	'''commands: 
+	       get_device_info, get_connection_status, get_current_summation_delivered,
+	       get_schedule, set_schedule, get_meter_info, get_network_info, set_meter_info, get_time,
+	       get_message, confirm_message, get_current_price, set_current_price, get_instantaneous_demand,
+	       get_current_summation_delivered, get_current_period_usage, get_last_period_usage,
+	       set_fast_poll, 
+	'''
 	cmdEventTemplate = '''<Command>
 	                       <Name>%s</Name>
 	                       <MeterMacId></MeterMacId>
 	                       <Event></Event>
-					   </Command>''' % (cmd, mac)
+					   </Command>''' % (cmd)
 	serial.port.write(cmdTemplate)
-
-get_current_price = '''<Command>
-  <Name>get_current_price</Name>
-  <Refresh>Y</Refresh>
-</Command>'''
-serial.port.write(get_current_price)
-
-
-# Read command results
-for line in serial.port.readlines():
-	if line.startswith('<Demand>'):
-
-
+	for line in serial.port.readlines():
+		print line
