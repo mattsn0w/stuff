@@ -14,31 +14,29 @@ import serial
 import time
 import xml.etree.ElementTree as ET
 
+
+epoch30yOffset = 985500000
+
 # Setup serial interface
 serial.port = serial.Serial("/dev/ttyUSB0", 115200, timeout=0.5)
 
-# Send initialization command
-#serial.port.write("<Command><Name>initialize</Name><Refresh>N</Refresh></Command>")
-serial.port.write("<Command><Name>initialize</Name></Command>")
 
-#serial.port.write("<Command><Name>get_device_info</Name></Command>")
+def cmdSerialWrite(cmd, refresh=None):
+	'''First command should always be: initialize
 
-# Get Schedule information
-# Possible events: time, price, demand, summation, message
-getScheduleInfo = '''<Command>
-                       <Name>get_schedule</Name>
-                       <MeterMacId>0xd8d5b900000020ba</MeterMacId>
-                       <Event>price</Event>
-				   </Command>'''
-serial.port.write(getScheduleInfo)
-
-
-def cmdSerialWrite(cmd):
+	commands: 
+	       get_device_info, get_connection_status, get_current_summation_delivered,
+	       get_schedule, set_schedule, get_meter_info, get_network_info, set_meter_info, get_time,
+	       get_message, confirm_message, get_current_price, set_current_price, get_instantaneous_demand,
+	       get_current_summation_delivered, get_current_period_usage, get_last_period_usage,
+	       set_fast_poll.
+	'''
 	results = '<data>'
-	cmdTemplate = '''<Command>
-	                       <Name>%s</Name>
-					 </Command>''' % (cmd)
-	serial.port.write(cmdTemplate)
+	if refresh:
+		cmd = '''<Command><Name>%s</Name><Refresh>Y</Refresh></Command>''' % (cmd)
+	else:
+		cmd = '''<Command><Name>%s</Name><Refresh>N</Refresh></Command>''' % (cmd)
+	serial.port.write(cmd)
 	for line in serial.port.readlines():
 		line = line.strip('\n')
 		line = line.strip('\r')
@@ -46,31 +44,12 @@ def cmdSerialWrite(cmd):
 	results += '</data>'
 	return results
 
-def cmdSerialWriteRefresh(cmd, refresh):
-	results = '<data>'
-	cmdTemplate = '''<Command>
-	                       <Name>%s</Name>
-	                       <Refresh>%s</Refresh>
-					 </Command>''' % (cmd, refresh)
-	serial.port.write(cmdTemplate)
-	for line in serial.port.readlines():
-		line = line.strip('\n')
-		line = line.strip('\r')
-		results += line
-	results += '</data>'
-	return results
 
-# Build big string of XML.
-data = cmdSerialWrite('get_current_price')
-
-data = cmdSerialWriteRefresh('get_current_summation_delivered', 'Y')
-
-# Create Element object, parsing XML.
-root = ET.fromstring(data)
 
 # Enumerate Element and get the 'demand' and timestamps
 def parseVals(xmldata):
 	lastTime = 0
+	demand = None
 	for child in root:
 		print '> %s' % child.tag
 		for item in child:
@@ -90,21 +69,28 @@ def parseVals(xmldata):
 				dright = val
 			elif key == 'DigitsLeft':
 				dleft = val
-		print 'Demand: %s \nTime since last poll: %s' % (demand, diff)
-		print 'digits right of decimal: %s' % dright
-		print 'digits leftt of decimal: %s' % dleft
+		if all([demand, now, dright]):
+			demandStr = str(demand)
+			demandStr = '%s.%s' % (demandStr[:-dright], demandStr[-dright:])
+			demand = float(demandStr)
+		print 'Demand: %s \nTime : %s' % (demand, now)
 
 
 
-def sendCmd(cmd):
-	'''commands: 
-	       get_device_info, get_connection_status, get_current_summation_delivered,
-	       get_schedule, set_schedule, get_meter_info, get_network_info, set_meter_info, get_time,
-	       get_message, confirm_message, get_current_price, set_current_price, get_instantaneous_demand,
-	       get_current_summation_delivered, get_current_period_usage, get_last_period_usage,
-	       set_fast_poll, 
-	'''
-	cmdTemplate = '''<Command><Name>%s</Name></Command>''' % (cmd)
-	serial.port.write(cmdTemplate)
-	for line in serial.port.readlines():
-		print line
+data = cmdSerialWrite('get_current_summation_delivered', True)
+
+# Build big string of XML.
+data = cmdSerialWrite('get_current_price')
+
+# Create Element object, parsing XML.
+root = ET.fromstring(data)
+
+
+for c in root:
+	print '<%s>' % c.tag
+	for i in c:
+		if i.tag == 'TimeStamp':
+			i.text = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(i.text, 0)))
+		print '\t<%s>\n\t\t%s\n\t</%s>' % (i.tag, i.text, i.tag)
+	print '</%s>' % c.tag
+
