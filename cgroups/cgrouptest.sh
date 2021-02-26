@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# references
+#    https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v1/memory.html
+#    https://serverfault.com/questions/560206/how-to-find-out-cgroup-of-a-particular-process/665723
+#    https://docs.docker.com/config/containers/runmetrics/
+# monitor with: 
+#     systemd-cgtop
+
 cg='zero_freakin_ram'
 cgfs='/sys/fs/cgroup/memory'
 
