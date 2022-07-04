@@ -1,4 +1,6 @@
 #!/bin/bash
+# Originally posted at https://snipplr.com/view/60879/monitoring-network-microbursts
+# Author: Matt Snow 
 
 function nets {
     TX_TOTAL=0
