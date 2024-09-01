@@ -20,11 +20,12 @@ I am using a Raspberry Pi 4 running Ubuntu 24.04 Desktop to build and configure 
 1) Install the udev rule file from QMK for the supported devices.
   1) get the file from the [git repo](https://github.com/qmk/qmk_firmware/blob/master/util/udev/50-qmk.rules) ; copy it to ` /etc/udev/rules.d/`
   2) Add your username to the `plugdev` and `input` groups in `/etc/group` or with [usermod](https://manpages.ubuntu.com/manpages/noble/en/man8/usermod.8.html).
-  3) 
-4) Execute the Chromium or Brave binary directly outside of the snap wrapper.
+  3) Run `sudo udevadm control --reload-rules`
+  4) Run `sudo udevadm trigger`
+2) Execute the Chromium or Brave binary directly outside of the snap wrapper.
   1) `/snap/chromium/current/usr/lib/chromium-browser/chrome --user-data-dir=~/ChrUnsnapped --class="ChrUnsnapped" %U &` 
-6) Browse to https://usevia.app and authorize the device.
-7) Profit.
+3) Browse to https://usevia.app and authorize the device.
+4) Profit.
 
 
 
