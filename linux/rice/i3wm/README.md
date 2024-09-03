@@ -1,5 +1,7 @@
 # Notes
 
+
+## Down Fonts
 ```
 
 # See the list at https://github.com/ryanoasis/nerd-fonts/releases
@@ -10,12 +12,13 @@ for fontname in SourceCodePro MartianMono Meslo UbuntuMono ; do
     unzip ${fontname}.zip
     popd
 done
-
+```
+## Populate font cache
+```
 # To populate font cache run:
 fc-cache -f -v
 # Verify the fonts are cached with:
 fc-list | grep -i nerd
-
 ```
 
 
