@@ -3,7 +3,7 @@
 ```
 
 # See the list at https://github.com/ryanoasis/nerd-fonts/releases
-for fontname in SourceCodePro MartianMono Meslo ; do
+for fontname in SourceCodePro MartianMono Meslo UbuntuMono ; do
     mkdir -p ~/.local/share/fonts/$fontname && cd !$
     wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${fontname}.zip
     unzip ${fontname}.zip
